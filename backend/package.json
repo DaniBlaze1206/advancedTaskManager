@@ -1,0 +1,30 @@
+{
+  "name": "advancedtaskmanager",
+  "version": "1.0.0",
+  "description": "A RESTful task manager built with Node.js, Express, and MongoDB",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev" : "nodemon src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaniBlaze1206/advancedTaskManager.git"
+  },
+  "author": "Daniel Ghannadi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DaniBlaze1206/advancedTaskManager/issues"
+  },
+  "homepage": "https://github.com/DaniBlaze1206/advancedTaskManager#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.5.0",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
