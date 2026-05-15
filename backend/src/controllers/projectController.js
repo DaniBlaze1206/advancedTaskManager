@@ -152,3 +152,57 @@ const updateProject = async (req, res) => {
 		
 	}
 };
+
+const addMember = async (req, res) => {
+  try {
+    const { username } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found"
+      });
+    }
+
+
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized"
+      });
+    }
+
+    const user = await User.findOne({ username: username.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    if (project.members.includes(user._id)) {
+      return res.status(400).json({
+        success: false,
+        message: "User already a member"
+      });
+    }
+
+    project.members.push(user._id);
+
+    await project.save();
+
+    res.json({
+      success: true,
+      message: "Member added successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to add member"
+    });
+  }
+};
