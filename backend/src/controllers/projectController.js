@@ -206,3 +206,59 @@ const addMember = async (req, res) => {
     });
   }
 };
+
+const removeMember = async (req, res) => {
+  try {
+    const { id, userId } = req.params;
+
+    const project = await Project.findById(id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found"
+      });
+    }
+
+    const requesterId = req.user._id.toString();
+
+    if (project.owner.toString() === userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Owner cannot be removed from the project"
+      });
+    }
+
+    if (
+      requesterId !== project.owner.toString() &&
+      requesterId !== userId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to remove this member"
+      });
+    }
+
+    if (!project.members.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "User is not a project member"
+      });
+    }
+
+    project.members.pull(userId);
+
+    await project.save();
+
+    res.json({
+      success: true,
+      message: "Member removed successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to remove member"
+    });
+  }
+};
