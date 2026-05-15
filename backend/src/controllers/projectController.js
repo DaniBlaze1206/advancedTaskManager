@@ -262,3 +262,73 @@ const removeMember = async (req, res) => {
     });
   }
 };
+
+
+
+const transferOwnership = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newOwnerId } = req.body;
+
+    const project = await Project.findById(id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found"
+      });
+    }
+
+   
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the owner can transfer ownership"
+      });
+    }
+
+    
+    if (!project.members.includes(newOwnerId)) {
+      return res.status(400).json({
+        success: false,
+        message: "New owner must be a project member"
+      });
+    }
+
+    
+    if (project.owner.toString() === newOwnerId) {
+      return res.status(400).json({
+        success: false,
+        message: "User is already the owner"
+      });
+    }
+
+    project.owner = newOwnerId;
+
+    await project.save();
+
+    res.json({
+      success: true,
+      message: "Ownership transferred successfully",
+      data: project
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to transfer ownership"
+    });
+  }
+};
+
+
+module.exports = {
+	createProject,
+	deleteProject,
+	getProjects,
+	getProjectById,
+	updateProject,
+	addMember,
+	removeMember,
+	transferOwnership
+}
