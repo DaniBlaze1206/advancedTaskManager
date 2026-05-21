@@ -1,159 +1,217 @@
-const Project = rqruire("../models/project");
+const Project = require("../models/Project");
+const User = require("../models/User");
+
+const {
+  validateCreateProject,
+  validateUpdateProject,
+  validateAddMember,
+  validateRemoveMember,
+  validateTransferOwnership,
+  validateProjectId,
+} = require("../validators/projectValidator");
+
 
 const createProject = async (req, res) => {
-	try {
-		const { name, description, members = [] } = req.body;
-		
+  const validation = validateCreateProject(req.body);
 
-		const memberSet = new Set([req.user._id.toString(), ...members]);
+  if (validation !== true) {
+    return res.status(400).json({
+      success: false,
+      errors: validation,
+    });
+  }
 
-		const project = await Project.create({
-			name, 
-			description,
-			owner: req.user._id,
-			members: Array.from(memberSet)
-		});
+  try {
+    const { name, description, members = [] } = req.body;
 
-		res.status(201).json({
-			success: true,
-			data: project
-		})
+    const memberSet = new Set([req.user._id.toString(), ...members]);
 
-	} catch (error) {
-		res.status(500).json({
-			success: false,
-			message: "Failed to create project"
-		});
-	}
+    const project = await Project.create({
+      name,
+      description,
+      owner: req.user._id,
+      members: Array.from(memberSet),
+    });
+
+    res.status(201).json({
+      success: true,
+      data: project,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to create project",
+    });
+  }
 };
+
 
 const deleteProject = async (req, res) => {
-	try {
-		const projectId = req.params.id;
+  const validation = validateProjectId(req.params);
 
-		const project = await Project.findById(projectId);
+  if (validation !== true) {
+    return res.status(400).json({
+      success: false,
+      errors: validation,
+    });
+  }
 
-		if (!project) {
-			return res.status(404).json({
-				success: false,
-				message: "Project not found"
-			});
-		};
+  try {
+    const projectId = req.params.id;
 
-		if(project.owner.toString() !== req.user._id.toString()){
-			return res.status(403).json({
-				success: false,
-				message: "You are not authorized to delete this project"
-			});
-		};
+    const project = await Project.findById(projectId);
 
-		await project.deleteOne();
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
 
-		res.status(200).json({
-			success: true,
-			message: "Project deleted successfully"
-		})
-	} catch (error) {
-		res.status(500).json({
-			success: false,
-			message: "Failed to delete project"
-		});
-	}
-}
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to delete this project",
+      });
+    }
 
-const getProjects = async (req, res) => {
-	try {
-		const projects = await Project.find({
-			members: req.user._id
-		}).select("name description owner");
+    await project.deleteOne();
 
-		res.json({
-			success: true,
-			data: projects
-		});
-	} catch (error) {
-		res.status(500).json({
-			success: false,
-			message: "Faild to fetch projects"
-		});
-	}
+    res.status(200).json({
+      success: true,
+      message: "Project deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete project",
+    });
+  }
 };
 
+
+const getProjects = async (req, res) => {
+  try {
+    const projects = await Project.find({
+      members: req.user._id,
+    }).select("name description owner");
+
+    res.json({
+      success: true,
+      data: projects,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch projects",
+    });
+  }
+};
+
+
 const getProjectById = async (req, res) => {
-	try {
-		const project = await Project.findById(req.params.id)
-		.populate("memebers", "username email")
-		.populated("owner", "username email");
+  const validation = validateProjectId(req.params);
 
-		if(!project) {
-			return res.status(404).json({
-					success: false,
-					message: "Project not found"
-				});
-		}
+  if (validation !== true) {
+    return res.status(400).json({
+      success: false,
+      errors: validation,
+    });
+  }
 
-		if(!project.memebers.some(
-			memeber => memeber._id.toString() === req.user._id.toString()
-		)) {
-			return res.status(403).json({
-				success: false,
-				message: "not authorized to access this project"
-			});
-		}
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate("members", "username email")
+      .populate("owner", "username email");
 
-		res.json({
-			success: true,
-			data: project
-		});
-	} catch (error) {
-		res.status(500).json({
-			success: false,
-			message: "Failed to fetch project"
-		});
-	}
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    const isMember = project.members.some(
+      (member) => member._id.toString() === req.user._id.toString()
+    );
+
+    if (!isMember) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this project",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: project,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch project",
+    });
+  }
 };
 
 
 const updateProject = async (req, res) => {
-	try {
-		const { name, description } = req.body;
+  const validation = validateUpdateProject(req.body);
 
-		const project = await Project.findById(req.params.id);
+  if (validation !== true) {
+    return res.status(400).json({
+      success: false,
+      errors: validation,
+    });
+  }
 
-		if(!project) {
-			return res.status(404).json({
-				success: false,
-				message: "Project not found"
-			});
-		}
+  try {
+    const { name, description } = req.body;
 
-		if(project.owner.toString() !== req.user._id.toString()) {
-			return res.status(403).json({
-				success: false,
-				message: "Not authorized to update this project"
-			});
-		}
+    const project = await Project.findById(req.params.id);
 
-		if (name) project.name = name;
-		if (description) project.description = description;
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
 
-		await project.save();
-		
-		res.json({
-			success: true,
-			data: project
-		});
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this project",
+      });
+    }
 
-	} catch (error) {
-		res.status(500).json({
-			success: false,
-			message: "Failed to update project"
-		});
-		
-	}
+    if (name) project.name = name;
+    if (description) project.description = description;
+
+    await project.save();
+
+    res.json({
+      success: true,
+      data: project,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update project",
+    });
+  }
 };
 
+
 const addMember = async (req, res) => {
+  const validation = validateAddMember(req.body);
+
+  if (validation !== true) {
+    return res.status(400).json({
+      success: false,
+      errors: validation,
+    });
+  }
+
   try {
     const { username } = req.body;
 
@@ -162,15 +220,14 @@ const addMember = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: "Project not found"
+        message: "Project not found",
       });
     }
-
 
     if (project.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized"
+        message: "Not authorized",
       });
     }
 
@@ -179,14 +236,18 @@ const addMember = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
-    if (project.members.includes(user._id)) {
+    const alreadyMember = project.members.some(
+      (member) => member.toString() === user._id.toString()
+    );
+
+    if (alreadyMember) {
       return res.status(400).json({
         success: false,
-        message: "User already a member"
+        message: "User already a member",
       });
     }
 
@@ -196,18 +257,27 @@ const addMember = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Member added successfully"
+      message: "Member added successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to add member"
+      message: "Failed to add member",
     });
   }
 };
 
+
 const removeMember = async (req, res) => {
+  const validation = validateRemoveMember(req.params);
+
+  if (validation !== true) {
+    return res.status(400).json({
+      success: false,
+      errors: validation,
+    });
+  }
+
   try {
     const { id, userId } = req.params;
 
@@ -216,7 +286,7 @@ const removeMember = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: "Project not found"
+        message: "Project not found",
       });
     }
 
@@ -225,24 +295,25 @@ const removeMember = async (req, res) => {
     if (project.owner.toString() === userId) {
       return res.status(400).json({
         success: false,
-        message: "Owner cannot be removed from the project"
+        message: "Owner cannot be removed from the project",
       });
     }
 
-    if (
-      requesterId !== project.owner.toString() &&
-      requesterId !== userId
-    ) {
+    if (requesterId !== project.owner.toString() && requesterId !== userId) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to remove this member"
+        message: "Not authorized to remove this member",
       });
     }
 
-    if (!project.members.includes(userId)) {
+    const isMember = project.members.some(
+      (member) => member.toString() === userId
+    );
+
+    if (!isMember) {
       return res.status(400).json({
         success: false,
-        message: "User is not a project member"
+        message: "User is not a project member",
       });
     }
 
@@ -252,20 +323,27 @@ const removeMember = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Member removed successfully"
+      message: "Member removed successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to remove member"
+      message: "Failed to remove member",
     });
   }
 };
 
 
-
 const transferOwnership = async (req, res) => {
+  const validation = validateTransferOwnership(req.body);
+
+  if (validation !== true) {
+    return res.status(400).json({
+      success: false,
+      errors: validation,
+    });
+  }
+
   try {
     const { id } = req.params;
     const { newOwnerId } = req.body;
@@ -275,31 +353,32 @@ const transferOwnership = async (req, res) => {
     if (!project) {
       return res.status(404).json({
         success: false,
-        message: "Project not found"
+        message: "Project not found",
       });
     }
 
-   
     if (project.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
-        message: "Only the owner can transfer ownership"
+        message: "Only the owner can transfer ownership",
       });
     }
 
-    
-    if (!project.members.includes(newOwnerId)) {
+    const isMember = project.members.some(
+      (member) => member.toString() === newOwnerId
+    );
+
+    if (!isMember) {
       return res.status(400).json({
         success: false,
-        message: "New owner must be a project member"
+        message: "New owner must be a project member",
       });
     }
 
-    
     if (project.owner.toString() === newOwnerId) {
       return res.status(400).json({
         success: false,
-        message: "User is already the owner"
+        message: "User is already the owner",
       });
     }
 
@@ -310,25 +389,24 @@ const transferOwnership = async (req, res) => {
     res.json({
       success: true,
       message: "Ownership transferred successfully",
-      data: project
+      data: project,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to transfer ownership"
+      message: "Failed to transfer ownership",
     });
   }
 };
 
 
 module.exports = {
-	createProject,
-	deleteProject,
-	getProjects,
-	getProjectById,
-	updateProject,
-	addMember,
-	removeMember,
-	transferOwnership
-}
+  createProject,
+  deleteProject,
+  getProjects,
+  getProjectById,
+  updateProject,
+  addMember,
+  removeMember,
+  transferOwnership,
+};
