@@ -98,4 +98,22 @@ const deleteList = async (req, res) => {
   }
 };
 
+const getAllLists = async (req, res) => {
+  const { projectId } = req.params;
+
+  try {
+    const lists = await List.find({ project: projectId })
+      .sort({ position: 1 }) 
+      .populate({
+        path: 'tasks',
+        options: { sort: { position: 1 } } 
+      });
+
+    res.status(200).json(lists);
+  } catch (error) {
+    res.status(500).json({ message: "Error", error: error.message });
+  }
+};
+
+
 module.exports = { createList };
