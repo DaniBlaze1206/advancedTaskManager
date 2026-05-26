@@ -1,26 +1,37 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const listSchema = new mongoose.Schema({
-	name: {
-		type: String,
-		required: true,
-		trim: true
-	},
-	project: {
-		type: mongoose.Schema.types.ObjectId,
-		required: true
-	},
-	position: {
-		type: Number,
-		requried: true
-	},
-	    createdBy: {
+const listSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    project: {
+      type: mongoose.Schema.types.ObjectId,
+      required: true,
+    },
+    position: {
+      type: Number,
+      requried: true,
+    },
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
-}, { timestamps: true});
+  },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+);
 
+listSchema.virtual('tasks', {
+	ref: 'Task',
+	localField: '_id',
+	foreignField: 'list'
+});
 
-
-module.exports = mongoose.model('List', listSchema);
+module.exports = mongoose.model("List", listSchema);
