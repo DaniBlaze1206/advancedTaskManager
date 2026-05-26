@@ -49,8 +49,19 @@ const updateListSchema = {
   $$strict: true,
 };
 
+const deleteListSchema = {
+  listId: {
+    type: "string",
+    pattern: /^[0-9a-fA-F]{24}$/,
+    empty: false,
+  },
+  $$strict: true,
+};
+
+
 module.exports = {
   validateCreateList: v.compile(createListSchema),
   validateProjectIdParam: v.compile(projectIdParamSchema),
   validateUpdateList: v.compile(updateListSchema),
+  validateDeleteList: v.compile(deleteListSchema)
 };
