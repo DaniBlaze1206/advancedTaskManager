@@ -8,28 +8,25 @@ const {
 } = require("../validators/listValidator");
 
 const createList = async (req, res) => {
-  // 1. Validate Params
+
   const paramErrors = validateProjectIdParam(req.params);
   if (paramErrors.length > 0)
     return res.status(400).json({ errors: paramErrors });
 
-  // 2. Validate Body
+
   const bodyErrors = validateCreateList(req.body);
   if (bodyErrors.length > 0)
     return res.status(400).json({ errors: bodyErrors });
 
   const { projectId } = req.params;
   const { name } = req.body;
-  const { id: userId } = req.user; // Assuming your auth middleware adds this
+  const { id: userId } = req.user; 
 
   try {
-    // 3. Calculate position
-    // Counting existing lists:
-    // If 0 lists exist, count is 0 (new list position = 0)
-    // If 1 list exists (pos 0), count is 1 (new list position = 1)
+
     const count = await List.countDocuments({ project: projectId });
 
-    // 4. Create the list
+   
     const newList = await List.create({
       name,
       project: projectId,
