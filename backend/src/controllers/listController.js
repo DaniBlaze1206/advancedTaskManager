@@ -1,21 +1,25 @@
 const List = require("../models/List");
+const Project = require("../models/project");
 const Task = require("../models/Task");
 
 const {
   validateCreateList,
   validateProjectIdParam,
   validateDeleteList,
+  validateUpdateList,
 } = require("../validators/listValidator");
 
 const createList = async (req, res) => {
-  const paramErrors = validateProjectIdParam(req.params);
-  if (paramErrors.length > 0)
-    return res.status(400).json({ errors: paramErrors });
-
-  const bodyErrors = validateCreateList(req.body);
-  if (bodyErrors.length > 0)
-    return res.status(400).json({ errors: bodyErrors });
-
+  const paramValidation = validateProjectIdParam(req.params);
+  if (paramValidation.length > 0){
+    return res.status(400).json({ errors: paramValidation });
+  }
+    
+  const bodyvalidation = validateCreateList(req.body);
+  if (bodyvalidation.length > 0){
+    return res.status(400).json({ errors: bodyvalidation });
+  }
+    
   const { projectId } = req.params;
   const { name } = req.body;
   const { id: userId } = req.user;
@@ -96,6 +100,11 @@ const deleteList = async (req, res) => {
 
 const getAllLists = async (req, res) => {
   const { projectId } = req.params;
+
+  const paramValidation = validateProjectIdParam(req.params);
+  if (paramValidation.length > 0) {
+    return res.status(400).json({ errors: paramValidation });
+  }
 
   try {
     const lists = await List.find({ project: projectId })
