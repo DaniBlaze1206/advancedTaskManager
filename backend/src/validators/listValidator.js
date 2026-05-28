@@ -23,7 +23,7 @@ const updateListSchema = {
   $$root: {
     type: "object",
     custom: (value, errors) => {
-      if (Object.keys(value).length === 0) {
+      if (value.name === undefined && value.position === undefined) {
         errors.push({
           type: "atLeastOneField",
           message: "At least one field (name or position) must be provided.",
@@ -32,13 +32,21 @@ const updateListSchema = {
       return value;
     },
   },
+
+  listId: {
+    type: "string",
+    pattern: /^[0-9a-fA-F]{24}$/,
+  },
+
   name: {
     type: "string",
     min: 3,
     max: 100,
     trim: true,
     optional: true,
+    empty: false,
   },
+
   position: {
     type: "number",
     integer: true,
