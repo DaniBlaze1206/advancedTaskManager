@@ -1,6 +1,11 @@
 const Validator = require("fastest-validator");
 const v = new Validator();
 
+const objectIdPattern = /^[0-9a-fA-F]{24}$/;
+
+// -------------------------
+// BODY: CREATE LIST
+// -------------------------
 const createListSchema = {
   name: {
     type: "string",
@@ -9,15 +14,34 @@ const createListSchema = {
     trim: true,
     empty: false,
   },
+  $$strict: true,
 };
+
 
 const projectIdParamSchema = {
   projectId: {
     type: "string",
-    pattern: /^[0-9a-fA-F]{24}$/,
+    pattern: objectIdPattern,
     empty: false,
   },
+  $$strict: true,
 };
+
+
+const projectAndListIdParamSchema = {
+  projectId: {
+    type: "string",
+    pattern: objectIdPattern,
+    empty: false,
+  },
+  listId: {
+    type: "string",
+    pattern: objectIdPattern,
+    empty: false,
+  },
+  $$strict: true,
+};
+
 
 const updateListSchema = {
   $$root: {
@@ -31,11 +55,6 @@ const updateListSchema = {
       }
       return value;
     },
-  },
-
-  listId: {
-    type: "string",
-    pattern: /^[0-9a-fA-F]{24}$/,
   },
 
   name: {
@@ -57,19 +76,12 @@ const updateListSchema = {
   $$strict: true,
 };
 
-const deleteListSchema = {
-  listId: {
-    type: "string",
-    pattern: /^[0-9a-fA-F]{24}$/,
-    empty: false,
-  },
-  $$strict: true,
-};
-
-
 module.exports = {
   validateCreateList: v.compile(createListSchema),
+
   validateProjectIdParam: v.compile(projectIdParamSchema),
+
+  validateProjectAndListIdParam: v.compile(projectAndListIdParamSchema),
+
   validateUpdateList: v.compile(updateListSchema),
-  validateDeleteList: v.compile(deleteListSchema)
 };
