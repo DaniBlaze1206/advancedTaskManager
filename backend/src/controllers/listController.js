@@ -5,108 +5,84 @@ const Task = require("../models/Task");
 const {
   validateCreateList,
   validateProjectIdParam,
-  validateDeleteList,
   validateUpdateList,
 } = require("../validators/listValidator");
 
+
 const createList = async (req, res) => {
-  const paramValidation = validateProjectIdParam(req.params);
-  if (paramValidation.length > 0) {
-    return res.status(400).json({ errors: paramValidation });
+  const paramValidationResult = validateProjectIdParam(req.params);
+  if (paramValidationResult !== true) {
+    return res.status(400).json({ errors: paramValidationResult });
   }
 
-  const bodyvalidation = validateCreateList(req.body);
-  if (bodyvalidation.length > 0) {
-    return res.status(400).json({ errors: bodyvalidation });
+  const bodyValidationResult = validateCreateList(req.body);
+  if (bodyValidationResult !== true) {
+    return res.status(400).json({ errors: bodyValidationResult });
   }
 
   const { projectId } = req.params;
   const { name } = req.body;
-  const { id: userId } = req.user;
 
   try {
+    const project = await Project.findById(projectId).select("owner members");
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const requesterId = req.user._id.toString();
+    const isOwner = project.owner.toString() === requesterId;
+    const hasAccess =
+      isOwner || project.members.some((member) => member.toString() === requesterId);
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const count = await List.countDocuments({ project: projectId });
 
     const newList = await List.create({
       name,
       project: projectId,
       position: count,
-      createdBy: userId,
+      createdBy: req.user._id,
     });
 
-    return res.status(201).json(newList);
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
-  }
-};
-
-const deleteList = async (req, res) => {
-  const paramValidation = validateProjectIdParam(req.params);
-  if (paramValidation !== true) {
-    return res.status(400).json({
-      message: "Invalid projectId",
-      errors: paramValidation,
-    });
-  }
-
-  const bodyValidation = validateDeleteList(req.body);
-  if (bodyValidation !== true) {
-    return res.status(400).json({
-      message: "Invalid listId",
-      errors: bodyValidation,
-    });
-  }
-
-  const { projectId } = req.params;
-  const { listId } = req.body;
-
-  try {
-    const list = await List.findOne({ _id: listId, project: projectId });
-
-    if (!list) {
-      return res.status(404).json({
-        message: "List not found in this project",
-      });
-    }
-
-    const deletedPosition = list.position;
-
-    await Task.deleteMany({ list: listId });
-
-    await List.deleteOne({ _id: listId });
-
-    await List.updateMany(
-      {
-        project: projectId,
-        position: { $gt: deletedPosition },
-      },
-      {
-        $inc: { position: -1 },
-      },
-    );
-
-    return res.status(200).json({
-      message: "List and its tasks deleted successfully",
+    return res.status(201).json({
+      message: "List created successfully",
+      list: newList,
     });
   } catch (error) {
     return res.status(500).json({
-      message: "Server error while deleting list",
+      message: "Server error",
       error: error.message,
     });
   }
 };
 
-const getAllLists = async (req, res) => {
-  const { projectId } = req.params;
 
-  const paramValidation = validateProjectIdParam(req.params);
-  if (paramValidation.length > 0) {
-    return res.status(400).json({ errors: paramValidation });
+const getAllLists = async (req, res) => {
+  const paramValidationResult = validateProjectIdParam(req.params);
+  if (paramValidationResult !== true) {
+    return res.status(400).json({ errors: paramValidationResult });
   }
 
+  const { projectId } = req.params;
+
   try {
+    const project = await Project.findById(projectId).select("owner members");
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const requesterId = req.user._id.toString();
+    const isOwner = project.owner.toString() === requesterId;
+    const hasAccess =
+      isOwner || project.members.some((member) => member.toString() === requesterId);
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const lists = await List.find({ project: projectId })
       .sort({ position: 1 })
       .populate({
@@ -114,9 +90,15 @@ const getAllLists = async (req, res) => {
         options: { sort: { position: 1 } },
       });
 
-    res.status(200).json(lists);
+    return res.status(200).json({
+      message: "Lists fetched successfully",
+      lists,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error", error: error.message });
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
@@ -131,8 +113,8 @@ const updateList = async (req, res) => {
     return res.status(400).json({ errors: bodyValidationResult });
   }
 
-  const { projectId } = req.params;
-  const { listId, name, position: newPosition } = req.body;
+  const { projectId, listId } = req.params;
+  const { name, position: newPosition } = req.body;
 
   try {
     const project = await Project.findById(projectId).select("owner members");
@@ -143,7 +125,7 @@ const updateList = async (req, res) => {
     const requesterId = req.user._id.toString();
     const isOwner = project.owner.toString() === requesterId;
     const hasAccess =
-      isOwner || project.members.some(m => m.toString() === requesterId);
+      isOwner || project.members.some((member) => member.toString() === requesterId);
 
     if (!hasAccess) {
       return res.status(403).json({ message: "Access denied" });
@@ -203,4 +185,64 @@ const updateList = async (req, res) => {
     });
   }
 };
-module.exports = { createList, deleteList, getAllLitst, updateList };
+
+
+const deleteList = async (req, res) => {
+  const paramValidationResult = validateProjectIdParam(req.params);
+  if (paramValidationResult !== true) {
+    return res.status(400).json({ errors: paramValidationResult });
+  }
+
+  const { projectId, listId } = req.params;
+
+  try {
+    const project = await Project.findById(projectId).select("owner members");
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const requesterId = req.user._id.toString();
+    const isOwner = project.owner.toString() === requesterId;
+    const hasAccess =
+      isOwner || project.members.some((member) => member.toString() === requesterId);
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const list = await List.findOne({ _id: listId, project: projectId });
+    if (!list) {
+      return res.status(404).json({ message: "List not found" });
+    }
+
+    const deletedPosition = list.position;
+
+    await list.deleteOne();
+
+    await Task.deleteMany({ project: projectId, list: listId });
+
+    await List.updateMany(
+      {
+        project: projectId,
+        position: { $gt: deletedPosition },
+      },
+      { $inc: { position: -1 } }
+    );
+
+    return res.status(200).json({
+      message: "List deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  createList,
+  getAllLists,
+  updateList,
+  deleteList,
+};
