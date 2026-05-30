@@ -6,7 +6,7 @@ const objectIdRule = {
   pattern: /^[0-9a-fA-F]{24}$/,
 };
 
-const validateCreateTaskBody = v.compile({
+const createTaskSchema = {
   listId: objectIdRule,
   title: {
     type: "string",
@@ -27,39 +27,60 @@ const validateCreateTaskBody = v.compile({
     min: 0,
     optional: true,
   },
-});
+};
 
-const validateUpdateTaskBody = v.compile({
-  taskId: objectIdRule,
+const updateTaskSchema = {
+  taskId: { type: "string", pattern: /^[0-9a-fA-F]{24}$/ },
+
   title: {
     type: "string",
+    optional: true,
     min: 1,
     max: 200,
     trim: true,
     empty: false,
-    optional: true,
   },
-  description: {
-    type: "string",
-    max: 5000,
-    trim: true,
-    optional: true,
-  },
-  listId: {
-    ...objectIdRule,
-    optional: true,
-  },
-  position: {
-    type: "number",
-    integer: true,
-    min: 0,
-    optional: true,
-  },
-});
+  description: { type: "string", optional: true, max: 5000, trim: true },
 
-const validateDeleteTaskBody = v.compile({
+  listId: { type: "string", optional: true, pattern: /^[0-9a-fA-F]{24}$/ },
+  position: { type: "number", optional: true, integer: true },
+
+  $$strict: true,
+  $$custom: (data, errors) => {
+    const hasUpdateField =
+      data.title !== undefined ||
+      data.description !== undefined ||
+      data.listId !== undefined ||
+      data.position !== undefined;
+
+    if (!hasUpdateField) {
+      errors.push({
+        type: "objectMinProps",
+        field: "body",
+        message: "At least one field must be provided",
+      });
+    }
+
+    if (data.listId !== undefined && data.position !== undefined) {
+      errors.push({
+        type: "forbidden",
+        field: "position",
+        message:
+          "Do not send position when moving a task to another list; it will be appended automatically",
+      });
+    }
+
+    return data;
+  },
+};
+
+const deleteTaskSchema = {
   taskId: objectIdRule,
-});
+};
+
+const validateCreatetaskBody = v.compile(createTaskSchema);
+const validateUpdateTaskBody = v.compile(updateTaskSchema);
+const validateDeleteTaskBody = v.compile(deleteTaskSchema);
 
 module.exports = {
   validateCreateTaskBody,
