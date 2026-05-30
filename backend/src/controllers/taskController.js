@@ -185,3 +185,26 @@ const updateTask = async (req, res) => {
 
       task.position = newPosition;
     }
+
+
+    if (title !== undefined) {
+      task.title = title;
+    }
+
+    if (description !== undefined) {
+      task.description = description;
+    }
+
+    await task.save();
+
+    return res.status(200).json({
+      message: "Task updated successfully",
+      task,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
