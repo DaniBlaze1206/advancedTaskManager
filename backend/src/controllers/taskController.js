@@ -208,3 +208,73 @@ const updateTask = async (req, res) => {
     });
   }
 };
+
+
+const deleteTask = async (req, res) => {
+  const paramValidationResult = validateProjectIdParam(req.params);
+  if (paramValidationResult !== true) {
+    return res.status(400).json({ errors: paramValidationResult });
+  }
+
+  const bodyValidationResult = validateDeleteTask(req.body);
+  if (bodyValidationResult !== true) {
+    return res.status(400).json({ errors: bodyValidationResult });
+  }
+
+  const { projectId } = req.params;
+  const { taskId } = req.body;
+
+  try {
+    const project = await Project.findById(projectId).select("owner members");
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const requesterId = req.user._id.toString();
+    const isOwner = project.owner.toString() === requesterId;
+    const hasAccess =
+      isOwner || project.members.some((member) => member.toString() === requesterId);
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const task = await Task.findOne({ _id: taskId, project: projectId });
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    const deletedPosition = task.position;
+    const listId = task.list.toString();
+
+    await task.deleteOne();
+
+    await Task.updateMany(
+      {
+        project: projectId,
+        list: listId,
+        position: { $gt: deletedPosition },
+      },
+      {
+        $inc: { position: -1 },
+      }
+    );
+
+    return res.status(200).json({
+      message: "Task deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
+
+module.exports = {
+  createTask,
+  updateTask,
+  deleteTask,
+};
