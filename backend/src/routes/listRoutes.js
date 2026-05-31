@@ -14,7 +14,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 router.post("/", authMiddleware, createList);
 router.get("/", authMiddleware, getAllLists);
-router.patch('/', authMiddleware, updateList);
-router.delete("/", authMiddleware, deleteList);
+router.patch('/:listId', authMiddleware, updateList);
+router.delete("/:listId", authMiddleware, deleteList);
 
 module.exports = router;
