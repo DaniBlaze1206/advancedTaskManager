@@ -3,16 +3,59 @@ const List = require("../models/List");
 const Task = require("../models/Task");
 
 const {
-  validateProjectIdParam,
+  validateProjectAndListIdParam,
+  validateProjectListAndTaskIdParam,
   validateCreateTask,
   validateUpdateTask,
-  validateDeleteTask,
 } = require("../validators/taskValidator");
 
+const getAllTasks = async (req, res) => {
+  const paramValidationResult = validateProjectAndListIdParam(req.params);
+  if (paramValidationResult !== true) {
+    return res.status(400).json({ errors: paramValidationResult });
+  }
 
+  const { projectId, listId } = req.params;
+
+  try {
+    const project = await Project.findById(projectId).select("owner members");
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const requesterId = req.user._id.toString();
+    const isOwner = project.owner.toString() === requesterId;
+    const hasAccess =
+      isOwner || project.members.some((member) => member.toString() === requesterId);
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const list = await List.findOne({ _id: listId, project: projectId });
+    if (!list) {
+      return res.status(404).json({ message: "List not found" });
+    }
+
+    const tasks = await Task.find({
+      project: projectId,
+      list: listId,
+    }).sort({ position: 1 });
+
+    return res.status(200).json({
+      message: "Tasks fetched successfully",
+      tasks,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
 
 const createTask = async (req, res) => {
-  const paramValidationResult = validateProjectIdParam(req.params);
+  const paramValidationResult = validateProjectAndListIdParam(req.params);
   if (paramValidationResult !== true) {
     return res.status(400).json({ errors: paramValidationResult });
   }
@@ -22,8 +65,8 @@ const createTask = async (req, res) => {
     return res.status(400).json({ errors: bodyValidationResult });
   }
 
-  const { projectId } = req.params;
-  const { listId, title, description } = req.body;
+  const { projectId, listId } = req.params;
+  const { title, description } = req.body;
 
   try {
     const project = await Project.findById(projectId).select("owner members");
@@ -73,7 +116,7 @@ const createTask = async (req, res) => {
 
 
 const updateTask = async (req, res) => {
-  const paramValidationResult = validateProjectIdParam(req.params);
+  const paramValidationResult = validateProjectListAndTaskIdParam(req.params);
   if (paramValidationResult !== true) {
     return res.status(400).json({ errors: paramValidationResult });
   }
@@ -83,8 +126,13 @@ const updateTask = async (req, res) => {
     return res.status(400).json({ errors: bodyValidationResult });
   }
 
-  const { projectId } = req.params;
-  const { taskId, title, description, listId: newListId, position: newPosition } = req.body;
+  const { projectId, listId, taskId } = req.params;
+  const {
+    title,
+    description,
+    listId: newListId,
+    position: newPosition,
+  } = req.body;
 
   try {
     const project = await Project.findById(projectId).select("owner members");
@@ -101,6 +149,11 @@ const updateTask = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    const routeList = await List.findOne({ _id: listId, project: projectId });
+    if (!routeList) {
+      return res.status(404).json({ message: "List not found" });
+    }
+
     const task = await Task.findOne({ _id: taskId, project: projectId });
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
@@ -108,6 +161,13 @@ const updateTask = async (req, res) => {
 
     const oldListId = task.list.toString();
     const oldPosition = task.position;
+
+   
+    if (oldListId !== listId) {
+      return res.status(400).json({
+        message: "Task does not belong to the list specified in the URL",
+      });
+    }
 
 
     if (newListId !== undefined && newListId.toString() !== oldListId) {
@@ -126,6 +186,7 @@ const updateTask = async (req, res) => {
         return res.status(404).json({ message: "Destination list not found" });
       }
 
+  
       await Task.updateMany(
         {
           project: projectId,
@@ -137,6 +198,7 @@ const updateTask = async (req, res) => {
         }
       );
 
+  
       const destinationTasksCount = await Task.countDocuments({
         project: projectId,
         list: newListId,
@@ -211,18 +273,12 @@ const updateTask = async (req, res) => {
 
 
 const deleteTask = async (req, res) => {
-  const paramValidationResult = validateProjectIdParam(req.params);
+  const paramValidationResult = validateProjectListAndTaskIdParam(req.params);
   if (paramValidationResult !== true) {
     return res.status(400).json({ errors: paramValidationResult });
   }
 
-  const bodyValidationResult = validateDeleteTask(req.body);
-  if (bodyValidationResult !== true) {
-    return res.status(400).json({ errors: bodyValidationResult });
-  }
-
-  const { projectId } = req.params;
-  const { taskId } = req.body;
+  const { projectId, listId, taskId } = req.params;
 
   try {
     const project = await Project.findById(projectId).select("owner members");
@@ -239,20 +295,32 @@ const deleteTask = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    const routeList = await List.findOne({ _id: listId, project: projectId });
+    if (!routeList) {
+      return res.status(404).json({ message: "List not found" });
+    }
+
     const task = await Task.findOne({ _id: taskId, project: projectId });
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    const taskListId = task.list.toString();
+
+    if (taskListId !== listId) {
+      return res.status(400).json({
+        message: "Task does not belong to the list specified in the URL",
+      });
+    }
+
     const deletedPosition = task.position;
-    const listId = task.list.toString();
 
     await task.deleteOne();
 
     await Task.updateMany(
       {
         project: projectId,
-        list: listId,
+        list: taskListId,
         position: { $gt: deletedPosition },
       },
       {
@@ -271,9 +339,8 @@ const deleteTask = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
+  getAllTasks,
   createTask,
   updateTask,
   deleteTask,
