@@ -10,12 +10,11 @@ const {
 
 } = require('../controllers/listController');
 
-const authMiddleware = require('../middlewares/authMiddleware');
 
-router.post("/", authMiddleware, createList);
-router.get("/", authMiddleware, getAllLists);
-router.patch('/:listId', authMiddleware, updateList);
-router.delete("/:listId", authMiddleware, deleteList);
+router.post("/", createList);
+router.get("/", getAllLists);
+router.patch('/:listId', updateList);
+router.delete("/:listId", deleteList);
 router.use("/:listId/tasks", taskRoutes);
 
 
