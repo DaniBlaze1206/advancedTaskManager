@@ -1,17 +1,23 @@
-const express = require('express');
-const router = express.Rpouter();
-const projectController = require('../controllers/projectController');
+const express = require("express");
+const router = express.Router();
+
+const projectController = require("../controllers/projectController");
+const listRoutes = require("./listRoutes");
 
 
-router.post('/create', projectController.createProject);
-router.get('/', projectController.getProjects);
-router.get('/:id', projectController.getProjectById);
-router.patch('/:id', projectController.updateProject);
-router.delete('/:id', projectController.deleteProject);
-router.post('/:id/members', projectController.addMember);
-router.delete('/:id/memebers/:userId', projectController.removeMember);
-router.patch('/:id/transfer', projectController.transferOwnership);
+router.post("/", projectController.createProject);
+router.get("/", projectController.getProjects);
+
+router.get("/:projectId", projectController.getProjectById);
+router.patch("/:projectId", projectController.updateProject);
+router.delete("/:projectId", projectController.deleteProject);
+
+router.post("/:projectId/members", projectController.addMember);
+router.delete("/:projectId/members/:userId", projectController.removeMember);
+
+router.patch("/:projectId/transfer", projectController.transferOwnership);
 
 
+router.use("/:projectId/lists", listRoutes);
 
 module.exports = router;
