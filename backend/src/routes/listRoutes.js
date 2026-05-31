@@ -16,5 +16,8 @@ router.post("/", authMiddleware, createList);
 router.get("/", authMiddleware, getAllLists);
 router.patch('/:listId', authMiddleware, updateList);
 router.delete("/:listId", authMiddleware, deleteList);
+router.use("/:listId/tasks", taskRoutes);
+
+
 
 module.exports = router;
