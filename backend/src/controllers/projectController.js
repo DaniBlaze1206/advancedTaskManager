@@ -70,7 +70,7 @@ const deleteProject = async (req, res) => {
   }
 
   try {
-    const projectId = req.params.id;
+    const projectId = req.params.projectId;
 
     const project = await Project.findById(projectId);
 
@@ -133,7 +133,7 @@ const getProjectById = async (req, res) => {
   }
 
   try {
-    const project = await Project.findById(req.params.id)
+    const project = await Project.findById(req.params.projectId)
       .populate("members", "username email")
       .populate("owner", "username email");
 
@@ -181,7 +181,7 @@ const updateProject = async (req, res) => {
   try {
     const { name, description } = req.body;
 
-    const project = await Project.findById(req.params.id);
+    const project = await Project.findById(req.params.projectId);
 
     if (!project) {
       return res.status(404).json({
@@ -228,7 +228,7 @@ const addMember = async (req, res) => {
   try {
     const { username } = req.body;
 
-    const project = await Project.findById(req.params.id);
+    const project = await Project.findById(req.params.projectId);
 
     if (!project) {
       return res.status(404).json({

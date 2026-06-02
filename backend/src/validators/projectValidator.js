@@ -65,23 +65,26 @@ const transferOwnershipSchema = {
 };
 
 const removeMemberSchema = {
-  id: {
+  projectId: {
     type: "string",
     pattern: /^[0-9a-fA-F]{24}$/,
+    empty: false,
   },
   userId: {
-    type: "string",
-    pattern: /^[0-9a-fA-F]{24}$/,
-  },
-};
-
-const projectIdParamSchema = {
-  id: {
     type: "string",
     pattern: /^[0-9a-fA-F]{24}$/,
     empty: false,
   },
 };
+
+const projectIdParamSchema = {
+  projectId: {
+    type: "string",
+    pattern: /^[0-9a-fA-F]{24}$/,
+    empty: false,
+  },
+};
+
 
 const validateCreateProject = v.compile(createProjectSchema);
 const validateUpdateProject = v.compile(updateProjectSchema);
