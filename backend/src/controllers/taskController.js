@@ -5,9 +5,9 @@ const List = require("../models/List");
 const Task = require("../models/Task");
 
 const {
-  validateCreateTask,
-  validateUpdateTask,
-  validateDeleteTask, 
+  validateCreateTaskBody,
+  validateUpdateTaskBody,
+  validateDeleteTaskBody, 
 } = require("../validators/taskValidator");
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -53,7 +53,7 @@ const ensureProjectAccessAndListScope = async ({ projectId, listId, userId }) =>
 const createTask = async (req, res) => {
   if (!ensureValidParamIds(req, res)) return;
 
-  const bodyValidationResult = validateCreateTask(req.body);
+  const bodyValidationResult = validateCreateTaskBody(req.body);
   if (bodyValidationResult !== true) {
     return res.status(400).json({ errors: bodyValidationResult });
   }
@@ -91,7 +91,7 @@ const createTask = async (req, res) => {
 const updateTask = async (req, res) => {
   if (!ensureValidParamIds(req, res)) return;
 
-  const bodyValidationResult = validateUpdateTask(req.body);
+  const bodyValidationResult = validateUpdateTaskBody(req.body);
   if (bodyValidationResult !== true) {
     return res.status(400).json({ errors: bodyValidationResult });
   }
@@ -205,8 +205,8 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
   if (!ensureValidParamIds(req, res)) return;
 
-  if (typeof validateDeleteTask === "function") {
-    const validationResult = validateDeleteTask({ taskId: req.params.taskId });
+  if (typeof validateDeleteTaskBody === "function") {
+    const validationResult = validateDeleteTaskBody({ taskId: req.params.taskId });
     if (validationResult !== true) {
       return res.status(400).json({ errors: validationResult });
     }
