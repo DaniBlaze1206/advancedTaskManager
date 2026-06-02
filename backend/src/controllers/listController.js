@@ -6,6 +6,7 @@ const {
   validateCreateList,
   validateProjectIdParam,
   validateUpdateList,
+  validateProjectAndListIdParam
 } = require("../validators/listValidator");
 
 
@@ -103,7 +104,7 @@ const getAllLists = async (req, res) => {
 };
 
 const updateList = async (req, res) => {
-  const paramValidationResult = validateProjectIdParam(req.params);
+  const paramValidationResult = validateProjectAndListIdParam(req.params);
   if (paramValidationResult !== true) {
     return res.status(400).json({ errors: paramValidationResult });
   }
@@ -188,7 +189,7 @@ const updateList = async (req, res) => {
 
 
 const deleteList = async (req, res) => {
-  const paramValidationResult = validateProjectIdParam(req.params);
+  const paramValidationResult = validateProjectAndListIdParam(req.params);
   if (paramValidationResult !== true) {
     return res.status(400).json({ errors: paramValidationResult });
   }
