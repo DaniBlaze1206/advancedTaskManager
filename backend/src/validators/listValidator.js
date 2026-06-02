@@ -3,9 +3,7 @@ const v = new Validator();
 
 const objectIdPattern = /^[0-9a-fA-F]{24}$/;
 
-// -------------------------
-// BODY: CREATE LIST
-// -------------------------
+
 const createListSchema = {
   name: {
     type: "string",

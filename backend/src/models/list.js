@@ -8,7 +8,7 @@ const listSchema = new mongoose.Schema(
       trim: true,
     },
     project: {
-      type: mongoose.Schema.types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
     position: {
