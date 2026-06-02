@@ -34,4 +34,4 @@ listSchema.virtual('tasks', {
 	foreignField: 'list'
 });
 
-module.exports = mongoose.model("List", listSchema);
+module.exports = mongoose.models.List || mongoose.model("List", listSchema);
