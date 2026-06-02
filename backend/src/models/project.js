@@ -8,7 +8,7 @@ const projectSchema = new mongoose.Schema({
 	},
 	description: {
 		type: String,
-		required: true
+		required: false
 	},
 	owner: {
 		type: mongoose.Schema.Types.ObjectId,
