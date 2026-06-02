@@ -88,7 +88,7 @@ const validateUpdateProject = v.compile(updateProjectSchema);
 const validateAddMember = v.compile(addMemberSchema);
 const validateTransferOwnership = v.compile(transferOwnershipSchema);
 const validateRemoveMember = v.compile(removeMemberSchema);
-const validateProjectId = v.compilte(projectIdParamSchema);
+const validateProjectId = v.compile(projectIdParamSchema);
 
 module.exports = {
   validateCreateProject,
