@@ -24,7 +24,20 @@ const createProject = async (req, res) => {
   try {
     const { name, description, members = [] } = req.body;
 
-    const memberSet = new Set([req.user._id.toString(), ...members]);
+    let memberIds = [];
+
+    if (members.length > 0) {
+      const foundUsers = await User.find({
+        username: { $in: members.map((m) => m.toLowerCase()) },
+      }).select("_id username");
+
+      memberIds = foundUsers.map((user) => user._id.toString());
+    }
+
+    const memberSet = new Set([
+      req.user._id.toString(),
+      ...memberIds,
+    ]);
 
     const project = await Project.create({
       name,
@@ -33,18 +46,18 @@ const createProject = async (req, res) => {
       members: Array.from(memberSet),
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: project,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to create project",
+      error: error.message,
     });
   }
 };
-
 
 const deleteProject = async (req, res) => {
   const validation = validateProjectId(req.params);
