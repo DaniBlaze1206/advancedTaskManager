@@ -7,7 +7,6 @@ const objectIdRule = {
 };
 
 const createTaskSchema = {
-  listId: objectIdRule,
   title: {
     type: "string",
     min: 1,
@@ -21,17 +20,10 @@ const createTaskSchema = {
     max: 5000,
     trim: true,
   },
-  position: {
-    type: "number",
-    integer: true,
-    min: 0,
-    optional: true,
-  },
+  $$strict: true,
 };
 
 const updateTaskSchema = {
-  taskId: { type: "string", pattern: /^[0-9a-fA-F]{24}$/ },
-
   title: {
     type: "string",
     optional: true,
@@ -40,10 +32,23 @@ const updateTaskSchema = {
     trim: true,
     empty: false,
   },
-  description: { type: "string", optional: true, max: 5000, trim: true },
-
-  listId: { type: "string", optional: true, pattern: /^[0-9a-fA-F]{24}$/ },
-  position: { type: "number", optional: true, integer: true },
+  description: {
+    type: "string",
+    optional: true,
+    max: 5000,
+    trim: true,
+  },
+  listId: {
+    type: "string",
+    optional: true,
+    pattern: /^[0-9a-fA-F]{24}$/,
+  },
+  position: {
+    type: "number",
+    optional: true,
+    integer: true,
+    min: 0,
+  },
 
   $$strict: true,
   $$custom: (data, errors) => {
