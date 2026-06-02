@@ -78,7 +78,7 @@ const deleteTaskSchema = {
   taskId: objectIdRule,
 };
 
-const validateCreatetaskBody = v.compile(createTaskSchema);
+const validateCreateTaskBody = v.compile(createTaskSchema);
 const validateUpdateTaskBody = v.compile(updateTaskSchema);
 const validateDeleteTaskBody = v.compile(deleteTaskSchema);
 
