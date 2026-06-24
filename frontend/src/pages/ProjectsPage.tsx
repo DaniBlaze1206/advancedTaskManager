@@ -4,13 +4,13 @@ import { useProjects } from '../hooks/useProjects'
 import PageLoader from '../components/ui/PageLoader'
 import EmptyState from '../components/ui/EmptyState'
 import Button from '../components/ui/Button'
-import Modal from '../components/ui/Modal'
 import ProjectCard from '../components/projects/ProjectCard'
+import ProjectFormModal from '../components/projects/ProjectFormModal'
 
 function ProjectsPage() {
   const { session } = useAuth()
   const projectsQuery = useProjects()
-  const [modalOpen, setModalOpen] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const currentUserId = session?.user._id
 
@@ -44,12 +44,9 @@ function ProjectsPage() {
 
   return (
     <div>
-      <PageHeader />
-
-     <div className="mt-4">
-        <Button variant="secondary" onClick={() => setModalOpen(true)}>
-          Test modal
-        </Button>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Your projects</h1>
+        <Button onClick={() => setCreateModalOpen(true)}>+ New project</Button>
       </div>
 
       {projects.length === 0 ? (
@@ -58,7 +55,7 @@ function ProjectsPage() {
             title="No projects yet"
             description="Create your first project to start organizing tasks."
             action={
-              <Button onClick={() => alert('Create modal — next commit')}>
+              <Button onClick={() => setCreateModalOpen(true)}>
                 + New project
               </Button>
             }
@@ -76,34 +73,10 @@ function ProjectsPage() {
         </div>
       )}
 
-      <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Test modal"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setModalOpen(false)}>OK</Button>
-          </>
-        }
-      >
-        <p className="text-sm text-slate-600">
-          This is the modal body. Try Escape, the backdrop, and the buttons.
-        </p>
-      </Modal>
-    </div>
-  )
-}
-
-function PageHeader() {
-  return (
-    <div className="flex items-center justify-between">
-      <h1 className="text-2xl font-bold text-slate-900">Your projects</h1>
-      <Button onClick={() => alert('Create modal — next commit')}>
-        + New project
-      </Button>
+      <ProjectFormModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+      />
     </div>
   )
 }
