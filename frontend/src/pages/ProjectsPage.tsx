@@ -1,47 +1,87 @@
-import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useProjects } from '../hooks/useProjects'
+import PageLoader from '../components/ui/PageLoader'
+import EmptyState from '../components/ui/EmptyState'
+import Button from '../components/ui/Button'
+import ProjectCard from '../components/projects/ProjectCard'
 
 function ProjectsPage() {
+  const { session } = useAuth()
+  const projectsQuery = useProjects()
+
+  const currentUserId = session?.user._id
+
+  if (projectsQuery.isPending) {
+    return <PageLoader />
+  }
+
+  if (projectsQuery.isError) {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+        <h2 className="text-base font-semibold text-slate-900">
+          Couldn’t load your projects
+        </h2>
+        <p className="mt-1 max-w-sm text-sm text-slate-600">
+          {projectsQuery.error.message}
+        </p>
+        <div className="mt-4">
+          <Button
+            variant="secondary"
+            onClick={() => projectsQuery.refetch()}
+            isLoading={projectsQuery.isFetching}
+          >
+            Try again
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  const projects = projectsQuery.data
+
+  if (projects.length === 0) {
+    return (
+      <div>
+        <PageHeader />
+        <div className="mt-6">
+          <EmptyState
+            title="No projects yet"
+            description="Create your first project to start organizing tasks."
+            action={
+              <Button onClick={() => alert('Create modal — next commit')}>
+                + New project
+              </Button>
+            }
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Your projects</h1>
-        <button
-          type="button"
-          onClick={() => alert('Create project modal — coming in Phase 2')}
-          className="rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-        >
-          + New project
-        </button>
-      </div>
+      <PageHeader />
 
-      <p className="mt-2 text-sm text-slate-600">
-        Real project cards will load from the backend in Phase 2.
-      </p>
-
-      {/* Placeholder grid — three fake cards so you can see the layout */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Link
-          to="/projects/demo-1"
-          className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-brand-300 hover:shadow"
-        >
-          <h2 className="text-base font-semibold text-slate-900">Demo project 1</h2>
-          <p className="mt-1 text-sm text-slate-600">A fake project to test navigation.</p>
-        </Link>
-        <Link
-          to="/projects/demo-2"
-          className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-brand-300 hover:shadow"
-        >
-          <h2 className="text-base font-semibold text-slate-900">Demo project 2</h2>
-          <p className="mt-1 text-sm text-slate-600">Click me to navigate to the board page.</p>
-        </Link>
-        <Link
-          to="/projects/demo-3"
-          className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-brand-300 hover:shadow"
-        >
-          <h2 className="text-base font-semibold text-slate-900">Demo project 3</h2>
-          <p className="mt-1 text-sm text-slate-600">All three lead to the placeholder board.</p>
-        </Link>
+        {projects.map((project) => (
+          <ProjectCard
+            key={project._id}
+            project={project}
+            isOwner={project.owner === currentUserId}
+          />
+        ))}
       </div>
+    </div>
+  )
+}
+
+function PageHeader() {
+  return (
+    <div className="flex items-center justify-between">
+      <h1 className="text-2xl font-bold text-slate-900">Your projects</h1>
+      <Button onClick={() => alert('Create modal — next commit')}>
+        + New project
+      </Button>
     </div>
   )
 }

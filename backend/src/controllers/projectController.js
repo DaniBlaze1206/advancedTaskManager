@@ -107,7 +107,7 @@ const getProjects = async (req, res) => {
   try {
     const projects = await Project.find({
       members: req.user._id,
-    }).select("name description owner");
+    }).select("name description owner members");
 
     res.json({
       success: true,
