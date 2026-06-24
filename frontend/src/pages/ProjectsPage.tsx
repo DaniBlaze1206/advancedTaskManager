@@ -1,13 +1,16 @@
+import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useProjects } from '../hooks/useProjects'
 import PageLoader from '../components/ui/PageLoader'
 import EmptyState from '../components/ui/EmptyState'
 import Button from '../components/ui/Button'
+import Modal from '../components/ui/Modal'
 import ProjectCard from '../components/projects/ProjectCard'
 
 function ProjectsPage() {
   const { session } = useAuth()
   const projectsQuery = useProjects()
+  const [modalOpen, setModalOpen] = useState(false)
 
   const currentUserId = session?.user._id
 
@@ -39,10 +42,17 @@ function ProjectsPage() {
 
   const projects = projectsQuery.data
 
-  if (projects.length === 0) {
-    return (
-      <div>
-        <PageHeader />
+  return (
+    <div>
+      <PageHeader />
+
+     <div className="mt-4">
+        <Button variant="secondary" onClick={() => setModalOpen(true)}>
+          Test modal
+        </Button>
+      </div>
+
+      {projects.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             title="No projects yet"
@@ -54,23 +64,35 @@ function ProjectsPage() {
             }
           />
         </div>
-      </div>
-    )
-  }
+      ) : (
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <ProjectCard
+              key={project._id}
+              project={project}
+              isOwner={project.owner === currentUserId}
+            />
+          ))}
+        </div>
+      )}
 
-  return (
-    <div>
-      <PageHeader />
-
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => (
-          <ProjectCard
-            key={project._id}
-            project={project}
-            isOwner={project.owner === currentUserId}
-          />
-        ))}
-      </div>
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Test modal"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setModalOpen(false)}>OK</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          This is the modal body. Try Escape, the backdrop, and the buttons.
+        </p>
+      </Modal>
     </div>
   )
 }
