@@ -6,16 +6,17 @@ import EmptyState from '../components/ui/EmptyState'
 import Button from '../components/ui/Button'
 import ProjectCard from '../components/projects/ProjectCard'
 import ProjectFormModal from '../components/projects/ProjectFormModal'
+import DeleteProjectDialog from '../components/projects/DeleteProjectDialog'
 import type { Project } from '../api/projects'
 
 function ProjectsPage() {
   const { session } = useAuth()
   const projectsQuery = useProjects()
 
-  // null = closed; undefined = create mode; Project = edit mode.
   const [modalProject, setModalProject] = useState<Project | null | undefined>(
     null,
   )
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null)
 
   const currentUserId = session?.user._id
 
@@ -29,6 +30,14 @@ function ProjectsPage() {
 
   function closeModal() {
     setModalProject(null)
+  }
+
+  function openDeleteDialog(project: Project) {
+    setDeletingProject(project)
+  }
+
+  function closeDeleteDialog() {
+    setDeletingProject(null)
   }
 
   if (projectsQuery.isPending) {
@@ -82,6 +91,7 @@ function ProjectsPage() {
               project={project}
               isOwner={project.owner === currentUserId}
               onEdit={openEditModal}
+              onDelete={openDeleteDialog}
             />
           ))}
         </div>
@@ -91,6 +101,13 @@ function ProjectsPage() {
         <ProjectFormModal
           onClose={closeModal}
           editingProject={modalProject}
+        />
+      )}
+
+      {deletingProject !== null && (
+        <DeleteProjectDialog
+          project={deletingProject}
+          onClose={closeDeleteDialog}
         />
       )}
     </div>

@@ -6,13 +6,13 @@ type ProjectCardProps = {
   project: Project
   isOwner: boolean
   onEdit: (project: Project) => void
+  onDelete: (project: Project) => void
 }
 
-function ProjectCard({ project, isOwner, onEdit }: ProjectCardProps) {
+function ProjectCard({ project, isOwner, onEdit, onDelete }: ProjectCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
-  // Close the menu when clicking outside it.
   useEffect(() => {
     if (!menuOpen) return
 
@@ -30,7 +30,6 @@ function ProjectCard({ project, isOwner, onEdit }: ProjectCardProps) {
   }, [menuOpen])
 
   function handleMenuButtonClick(event: React.MouseEvent) {
-    // Prevent the click from bubbling up to the wrapping <Link>.
     event.preventDefault()
     event.stopPropagation()
     setMenuOpen((prev) => !prev)
@@ -41,6 +40,13 @@ function ProjectCard({ project, isOwner, onEdit }: ProjectCardProps) {
     event.stopPropagation()
     setMenuOpen(false)
     onEdit(project)
+  }
+
+  function handleDeleteClick(event: React.MouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    setMenuOpen(false)
+    onDelete(project)
   }
 
   return (
@@ -73,6 +79,14 @@ function ProjectCard({ project, isOwner, onEdit }: ProjectCardProps) {
                 className="block w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100"
               >
                 Rename
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleDeleteClick}
+                className="block w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50"
+              >
+                Delete
               </button>
             </div>
           )}

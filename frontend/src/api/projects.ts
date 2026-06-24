@@ -50,3 +50,7 @@ export async function updateProject(
   )
   return data.data
 }
+
+export async function deleteProject(projectId: string): Promise<void> {
+  await apiClient.delete(`/projects/${projectId}`)
+}
