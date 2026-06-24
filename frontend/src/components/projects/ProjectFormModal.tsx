@@ -3,66 +3,82 @@ import Modal from '../ui/Modal'
 import Input from '../ui/Input'
 import Button from '../ui/Button'
 import { useCreateProject } from '../../hooks/useCreateProject'
+import { useUpdateProject } from '../../hooks/useUpdateProject'
 import { toast } from '../../lib/toast'
+import type { Project } from '../../api/projects'
 
 type ProjectFormModalProps = {
-  open: boolean
   onClose: () => void
+  editingProject?: Project | null
 }
 
-function ProjectFormModal({ open, onClose }: ProjectFormModalProps) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+function ProjectFormModal({ onClose, editingProject }: ProjectFormModalProps) {
+  const isEditMode = editingProject != null
+
+ const [name, setName] = useState(editingProject?.name ?? '')
+  const [description, setDescription] = useState(
+    editingProject?.description ?? '',
+  )
 
   const createMutation = useCreateProject()
+  const updateMutation = useUpdateProject()
 
+  const activeMutation = isEditMode ? updateMutation : createMutation
   const canSubmit = name.trim().length > 0
 
   function handleClose() {
-    if (createMutation.isPending) return
-    setName('')
-    setDescription('')
-    createMutation.reset()
+    if (activeMutation.isPending) return
     onClose()
   }
 
   function handleSubmit() {
-    if (!canSubmit || createMutation.isPending) return
+    if (!canSubmit || activeMutation.isPending) return
 
-    createMutation.mutate(
-      {
-        name: name.trim(),
-        description: description.trim() || undefined,
-      },
-      {
+    const payload = {
+      name: name.trim(),
+      description: description.trim() || undefined,
+    }
+
+    if (isEditMode) {
+      updateMutation.mutate(
+        { projectId: editingProject._id, input: payload },
+        {
+          onSuccess: () => {
+            toast.success('Project updated')
+            onClose()
+          },
+        },
+      )
+    } else {
+      createMutation.mutate(payload, {
         onSuccess: () => {
           toast.success('Project created')
-          handleClose()
+          onClose()
         },
-      },
-    )
+      })
+    }
   }
 
   return (
     <Modal
-      open={open}
+      open
       onClose={handleClose}
-      title="New project"
+      title={isEditMode ? 'Edit project' : 'New project'}
       footer={
         <>
           <Button
             variant="secondary"
             onClick={handleClose}
-            disabled={createMutation.isPending}
+            disabled={activeMutation.isPending}
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            isLoading={createMutation.isPending}
+            isLoading={activeMutation.isPending}
           >
-            Create project
+            {isEditMode ? 'Save changes' : 'Create project'}
           </Button>
         </>
       }
@@ -93,9 +109,9 @@ function ProjectFormModal({ open, onClose }: ProjectFormModalProps) {
           />
         </div>
 
-        {createMutation.error && (
+        {activeMutation.error && (
           <p className="text-sm text-red-600">
-            {createMutation.error.message}
+            {activeMutation.error.message}
           </p>
         )}
       </div>

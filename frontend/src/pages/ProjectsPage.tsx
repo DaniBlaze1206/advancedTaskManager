@@ -6,13 +6,30 @@ import EmptyState from '../components/ui/EmptyState'
 import Button from '../components/ui/Button'
 import ProjectCard from '../components/projects/ProjectCard'
 import ProjectFormModal from '../components/projects/ProjectFormModal'
+import type { Project } from '../api/projects'
 
 function ProjectsPage() {
   const { session } = useAuth()
   const projectsQuery = useProjects()
-  const [createModalOpen, setCreateModalOpen] = useState(false)
+
+  // null = closed; undefined = create mode; Project = edit mode.
+  const [modalProject, setModalProject] = useState<Project | null | undefined>(
+    null,
+  )
 
   const currentUserId = session?.user._id
+
+  function openCreateModal() {
+    setModalProject(undefined)
+  }
+
+  function openEditModal(project: Project) {
+    setModalProject(project)
+  }
+
+  function closeModal() {
+    setModalProject(null)
+  }
 
   if (projectsQuery.isPending) {
     return <PageLoader />
@@ -46,7 +63,7 @@ function ProjectsPage() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Your projects</h1>
-        <Button onClick={() => setCreateModalOpen(true)}>+ New project</Button>
+        <Button onClick={openCreateModal}>+ New project</Button>
       </div>
 
       {projects.length === 0 ? (
@@ -54,11 +71,7 @@ function ProjectsPage() {
           <EmptyState
             title="No projects yet"
             description="Create your first project to start organizing tasks."
-            action={
-              <Button onClick={() => setCreateModalOpen(true)}>
-                + New project
-              </Button>
-            }
+            action={<Button onClick={openCreateModal}>+ New project</Button>}
           />
         </div>
       ) : (
@@ -68,15 +81,18 @@ function ProjectsPage() {
               key={project._id}
               project={project}
               isOwner={project.owner === currentUserId}
+              onEdit={openEditModal}
             />
           ))}
         </div>
       )}
 
-      <ProjectFormModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-      />
+      {modalProject !== null && (
+        <ProjectFormModal
+          onClose={closeModal}
+          editingProject={modalProject}
+        />
+      )}
     </div>
   )
 }
