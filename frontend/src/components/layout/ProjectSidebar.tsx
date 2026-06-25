@@ -1,10 +1,12 @@
-import { Link, NavLink, useParams } from 'react-router-dom'
+import { NavLink, useParams } from 'react-router-dom'
 import { useProjects } from '../../hooks/useProjects'
+import { useCreateProjectModal } from '../../hooks/useCreateProjectModal'
 import Spinner from '../ui/Spinner'
 
 function ProjectsSidebar() {
   const { projectId: activeProjectId } = useParams<{ projectId: string }>()
   const projectsQuery = useProjects()
+  const createModal = useCreateProjectModal()
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
@@ -45,12 +47,13 @@ function ProjectsSidebar() {
       </div>
 
       <div className="border-t border-slate-200 p-3">
-        <Link
-          to="/"
+        <button
+          type="button"
+          onClick={createModal.open}
           className="flex w-full items-center justify-center rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700"
         >
           + New project
-        </Link>
+        </button>
       </div>
     </aside>
   )

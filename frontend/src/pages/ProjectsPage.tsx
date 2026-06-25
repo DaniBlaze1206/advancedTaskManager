@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useProjects } from '../hooks/useProjects'
+import { useCreateProjectModal } from '../hooks/useCreateProjectModal'
 import PageLoader from '../components/ui/PageLoader'
 import EmptyState from '../components/ui/EmptyState'
 import Button from '../components/ui/Button'
@@ -12,24 +13,20 @@ import type { Project } from '../api/projects'
 function ProjectsPage() {
   const { session } = useAuth()
   const projectsQuery = useProjects()
+  const createModal = useCreateProjectModal()
 
-  const [modalProject, setModalProject] = useState<Project | null | undefined>(
-    null,
-  )
+  // Local state only for the EDIT flow now. Create is handled globally.
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [deletingProject, setDeletingProject] = useState<Project | null>(null)
 
   const currentUserId = session?.user._id
 
-  function openCreateModal() {
-    setModalProject(undefined)
-  }
-
   function openEditModal(project: Project) {
-    setModalProject(project)
+    setEditingProject(project)
   }
 
-  function closeModal() {
-    setModalProject(null)
+  function closeEditModal() {
+    setEditingProject(null)
   }
 
   function openDeleteDialog(project: Project) {
@@ -46,7 +43,7 @@ function ProjectsPage() {
 
   if (projectsQuery.isError) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+      <div className="mx-auto flex min-h-[40vh] max-w-6xl flex-col items-center justify-center text-center">
         <h2 className="text-base font-semibold text-slate-900">
           Couldn’t load your projects
         </h2>
@@ -69,10 +66,10 @@ function ProjectsPage() {
   const projects = projectsQuery.data
 
   return (
-    <div>
+    <div className="mx-auto max-w-6xl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Your projects</h1>
-        <Button onClick={openCreateModal}>+ New project</Button>
+        <Button onClick={createModal.open}>+ New project</Button>
       </div>
 
       {projects.length === 0 ? (
@@ -80,7 +77,7 @@ function ProjectsPage() {
           <EmptyState
             title="No projects yet"
             description="Create your first project to start organizing tasks."
-            action={<Button onClick={openCreateModal}>+ New project</Button>}
+            action={<Button onClick={createModal.open}>+ New project</Button>}
           />
         </div>
       ) : (
@@ -97,10 +94,10 @@ function ProjectsPage() {
         </div>
       )}
 
-      {modalProject !== null && (
+      {editingProject !== null && (
         <ProjectFormModal
-          onClose={closeModal}
-          editingProject={modalProject}
+          onClose={closeEditModal}
+          editingProject={editingProject}
         />
       )}
 
