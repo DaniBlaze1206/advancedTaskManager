@@ -10,7 +10,6 @@ const {
   validateProjectId,
 } = require("../validators/projectValidator");
 
-
 const createProject = async (req, res) => {
   const validation = validateCreateProject(req.body);
 
@@ -34,10 +33,7 @@ const createProject = async (req, res) => {
       memberIds = foundUsers.map((user) => user._id.toString());
     }
 
-    const memberSet = new Set([
-      req.user._id.toString(),
-      ...memberIds,
-    ]);
+    const memberSet = new Set([req.user._id.toString(), ...memberIds]);
 
     const project = await Project.create({
       name,
@@ -102,7 +98,6 @@ const deleteProject = async (req, res) => {
   }
 };
 
-
 const getProjects = async (req, res) => {
   try {
     const projects = await Project.find({
@@ -121,7 +116,6 @@ const getProjects = async (req, res) => {
   }
 };
 
-
 const getProjectById = async (req, res) => {
   const validation = validateProjectId(req.params);
 
@@ -135,7 +129,12 @@ const getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId)
       .populate("members", "username email")
-      .populate("owner", "username email");
+      .populate("owner", "username email")
+      .populate({
+        path: "lists",
+        options: { sort: { position: 1 } },
+        populate: { path: "tasks", options: { sort: { position: 1 } } },
+      });
 
     if (!project) {
       return res.status(404).json({
@@ -145,7 +144,7 @@ const getProjectById = async (req, res) => {
     }
 
     const isMember = project.members.some(
-      (member) => member._id.toString() === req.user._id.toString()
+      (member) => member._id.toString() === req.user._id.toString(),
     );
 
     if (!isMember) {
@@ -166,7 +165,6 @@ const getProjectById = async (req, res) => {
     });
   }
 };
-
 
 const updateProject = async (req, res) => {
   const validation = validateUpdateProject(req.body);
@@ -214,7 +212,6 @@ const updateProject = async (req, res) => {
   }
 };
 
-
 const addMember = async (req, res) => {
   const validation = validateAddMember(req.body);
 
@@ -254,7 +251,7 @@ const addMember = async (req, res) => {
     }
 
     const alreadyMember = project.members.some(
-      (member) => member.toString() === user._id.toString()
+      (member) => member.toString() === user._id.toString(),
     );
 
     if (alreadyMember) {
@@ -279,7 +276,6 @@ const addMember = async (req, res) => {
     });
   }
 };
-
 
 const removeMember = async (req, res) => {
   const validation = validateRemoveMember(req.params);
@@ -320,7 +316,7 @@ const removeMember = async (req, res) => {
     }
 
     const isMember = project.members.some(
-      (member) => member.toString() === userId
+      (member) => member.toString() === userId,
     );
 
     if (!isMember) {
@@ -345,7 +341,6 @@ const removeMember = async (req, res) => {
     });
   }
 };
-
 
 const transferOwnership = async (req, res) => {
   const validation = validateTransferOwnership(req.body);
@@ -378,7 +373,7 @@ const transferOwnership = async (req, res) => {
     }
 
     const isMember = project.members.some(
-      (member) => member.toString() === newOwnerId
+      (member) => member.toString() === newOwnerId,
     );
 
     if (!isMember) {
@@ -411,7 +406,6 @@ const transferOwnership = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   createProject,
