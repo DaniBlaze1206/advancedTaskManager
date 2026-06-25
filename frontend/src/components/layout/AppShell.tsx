@@ -13,7 +13,7 @@ function AppShell() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+        <div className="flex h-14 items-center justify-between px-6">
           <Link to="/" className="text-base font-bold text-slate-900">
             Task Manager
           </Link>
@@ -46,7 +46,7 @@ function AppShell() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl p-6">
+      <main className="p-6">
         <Outlet />
       </main>
     </div>
