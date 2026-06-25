@@ -15,6 +15,11 @@ export type CreateListInput = {
   name: string
 }
 
+export type UpdateListInput = {
+  name?: string
+  position?: number
+}
+
 type ListEnvelope = {
   success: true
   data: List
@@ -29,4 +34,23 @@ export async function createList(
     input,
   )
   return data.data
+}
+
+export async function updateList(
+  projectId: string,
+  listId: string,
+  input: UpdateListInput,
+): Promise<List> {
+  const { data } = await apiClient.patch<ListEnvelope>(
+    `/projects/${projectId}/lists/${listId}`,
+    input,
+  )
+  return data.data
+}
+
+export async function deleteList(
+  projectId: string,
+  listId: string,
+): Promise<void> {
+  await apiClient.delete(`/projects/${projectId}/lists/${listId}`)
 }

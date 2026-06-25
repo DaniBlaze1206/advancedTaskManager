@@ -1,17 +1,24 @@
+import { useState } from 'react'
 import type { List } from '../../api/lists'
+import ColumnHeader from './ColumnHeader'
+import DeleteListDialog from './DeleteListDialog'
 import TaskCard from './TaskCard'
 
 type ColumnProps = {
   list: List
+  projectId: string
 }
 
-function Column({ list }: ColumnProps) {
+function Column({ list, projectId }: ColumnProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+
   return (
     <div className="flex h-full w-80 shrink-0 flex-col rounded-lg bg-slate-100 p-3">
-      <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">{list.name}</h2>
-        <span className="text-xs text-slate-500">{list.tasks.length}</span>
-      </header>
+      <ColumnHeader
+        list={list}
+        projectId={projectId}
+        onRequestDelete={() => setIsDeleting(true)}
+      />
 
       <div className="flex flex-col gap-2 overflow-y-auto">
         {list.tasks.length === 0 ? (
@@ -22,6 +29,14 @@ function Column({ list }: ColumnProps) {
           list.tasks.map((task) => <TaskCard key={task._id} task={task} />)
         )}
       </div>
+
+      {isDeleting && (
+        <DeleteListDialog
+          list={list}
+          projectId={projectId}
+          onClose={() => setIsDeleting(false)}
+        />
+      )}
     </div>
   )
 }
