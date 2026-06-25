@@ -3,6 +3,7 @@ import type { List } from '../../api/lists'
 import ColumnHeader from './ColumnHeader'
 import DeleteListDialog from './DeleteListDialog'
 import TaskCard from './TaskCard'
+import AddTaskForm from './AddTaskForm'
 
 type ColumnProps = {
   list: List
@@ -20,14 +21,11 @@ function Column({ list, projectId }: ColumnProps) {
         onRequestDelete={() => setIsDeleting(true)}
       />
 
-      <div className="flex flex-col gap-2 overflow-y-auto">
-        {list.tasks.length === 0 ? (
-          <p className="rounded-md border border-dashed border-slate-300 p-3 text-center text-xs text-slate-500">
-            No tasks yet
-          </p>
-        ) : (
-          list.tasks.map((task) => <TaskCard key={task._id} task={task} />)
-        )}
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        {list.tasks.map((task) => (
+          <TaskCard key={task._id} task={task} />
+        ))}
+        <AddTaskForm projectId={projectId} listId={list._id} />
       </div>
 
       {isDeleting && (

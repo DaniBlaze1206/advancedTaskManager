@@ -1,57 +1,56 @@
-import { useEffect, useRef, useState } from 'react'
-import { useCreateList } from '../../hooks/useCreateList'
-import { toast } from '../../lib/toast'
+import { useEffect, useRef, useState } from "react";
+import { useCreateList } from "../../hooks/useCreateList";
+import { toast } from "../../lib/toast";
 
 type AddColumnProps = {
-  projectId: string
-}
+  projectId: string;
+};
 
 function AddColumn({ projectId }: AddColumnProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [name, setName] = useState('')
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const createMutation = useCreateList()
+  const createMutation = useCreateList();
 
   // When entering edit mode, focus the input so the user can just start typing.
   useEffect(() => {
     if (isEditing) {
-      inputRef.current?.focus()
+      inputRef.current?.focus();
     }
-  }, [isEditing])
+  }, [isEditing]);
 
   function startEditing() {
-    setIsEditing(true)
+    setIsEditing(true);
   }
 
   function cancelEditing() {
-    setIsEditing(false)
-    setName('')
-    createMutation.reset()
+    setIsEditing(false);
+    setName("");
+    createMutation.reset();
   }
 
   function handleSubmit() {
-    const trimmed = name.trim()
-    if (trimmed.length === 0 || createMutation.isPending) return
+    const trimmed = name.trim();
+    if (trimmed.length === 0 || createMutation.isPending) return;
 
     createMutation.mutate(
       { projectId, input: { name: trimmed } },
       {
         onSuccess: () => {
-          toast.success('Column added')
-          setName('')
-          // Stay in edit mode so the user can quickly add another column.
+          toast.success("Column added");
+          cancelEditing();
         },
       },
-    )
+    );
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      handleSubmit()
-    } else if (event.key === 'Escape') {
-      cancelEditing()
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSubmit();
+    } else if (event.key === "Escape") {
+      cancelEditing();
     }
   }
 
@@ -64,7 +63,7 @@ function AddColumn({ projectId }: AddColumnProps) {
       >
         + Add column
       </button>
-    )
+    );
   }
 
   return (
@@ -91,7 +90,7 @@ function AddColumn({ projectId }: AddColumnProps) {
           disabled={name.trim().length === 0 || createMutation.isPending}
           className="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {createMutation.isPending ? 'Adding…' : 'Add column'}
+          {createMutation.isPending ? "Adding…" : "Add column"}
         </button>
         <button
           type="button"
@@ -103,7 +102,7 @@ function AddColumn({ projectId }: AddColumnProps) {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
-export default AddColumn
+export default AddColumn;
