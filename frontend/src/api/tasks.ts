@@ -15,6 +15,13 @@ export type CreateTaskInput = {
   description?: string
 }
 
+export type UpdateTaskInput = {
+  title?: string
+  description?: string
+  list?: string
+  position?: number
+}
+
 type TaskEnvelope = {
   success: true
   data: Task
@@ -30,4 +37,27 @@ export async function createTask(
     input,
   )
   return data.data
+}
+
+export async function updateTask(
+  projectId: string,
+  listId: string,
+  taskId: string,
+  input: UpdateTaskInput,
+): Promise<Task> {
+  const { data } = await apiClient.patch<TaskEnvelope>(
+    `/projects/${projectId}/lists/${listId}/tasks/${taskId}`,
+    input,
+  )
+  return data.data
+}
+
+export async function deleteTask(
+  projectId: string,
+  listId: string,
+  taskId: string,
+): Promise<void> {
+  await apiClient.delete(
+    `/projects/${projectId}/lists/${listId}/tasks/${taskId}`,
+  )
 }
