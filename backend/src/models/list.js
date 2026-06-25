@@ -9,17 +9,19 @@ const listSchema = new mongoose.Schema(
     },
     project: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
       required: true,
     },
     position: {
       type: Number,
-      requried: true,
+      required: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+
   },
   {
     timestamps: true,
@@ -28,10 +30,10 @@ const listSchema = new mongoose.Schema(
   },
 );
 
-listSchema.virtual('tasks', {
-	ref: 'Task',
-	localField: '_id',
-	foreignField: 'list'
+listSchema.virtual("tasks", {
+  ref: "Task",
+  localField: "_id",
+  foreignField: "list",
 });
 
 module.exports = mongoose.models.List || mongoose.model("List", listSchema);
