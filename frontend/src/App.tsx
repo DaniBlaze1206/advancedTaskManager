@@ -5,7 +5,9 @@ import ProjectsPage from './pages/ProjectsPage'
 import BoardPage from './pages/BoardPage'
 import NotFoundPage from './pages/NotFoundPage'
 import AppShell from './components/layout/AppShell'
+import BoardLayout from './components/layout/BoardLayout'
 import ProtectedRoute from './routes/ProtectedRoute'
+
 function App() {
   return (
     <Routes>
@@ -15,7 +17,9 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<ProjectsPage />} />
-          <Route path="/projects/:projectId" element={<BoardPage />} />
+          <Route element={<BoardLayout />}>
+            <Route path="/projects/:projectId" element={<BoardPage />} />
+          </Route>
         </Route>
       </Route>
 
