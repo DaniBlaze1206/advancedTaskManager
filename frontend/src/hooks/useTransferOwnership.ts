@@ -17,7 +17,6 @@ export function useTransferOwnership() {
       queryClient.invalidateQueries({
         queryKey: qk.project(variables.projectId),
       })
-      // Also invalidate the lightweight projects list, since `owner` changed.
       queryClient.invalidateQueries({ queryKey: qk.projects })
     },
   })
