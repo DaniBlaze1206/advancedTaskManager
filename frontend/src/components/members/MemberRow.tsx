@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import { useRemoveMember } from '../../hooks/useRemoveMember'
+import { useTransferOwnership } from '../../hooks/useTransferOwnership'
 import { toast } from '../../lib/toast'
 import type { User } from '../../api/projects'
 
@@ -13,6 +14,8 @@ type MemberRowProps = {
   onLeaveSuccess: () => void
 }
 
+type ConfirmAction = 'remove' | 'leave' | 'transfer' | null
+
 function MemberRow({
   member,
   projectId,
@@ -21,42 +24,55 @@ function MemberRow({
   canManageMembers,
   onLeaveSuccess,
 }: MemberRowProps) {
-  const [isConfirming, setIsConfirming] = useState(false)
-  const removeMutation = useRemoveMember()
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
 
-  // The owner can remove non-owner members.
+  const removeMutation = useRemoveMember()
+  const transferMutation = useTransferOwnership()
+
   const canRemove = canManageMembers && !isOwner && !isCurrentUser
 
-  // A member (not the owner) can leave the project (their own row).
+  const canTransfer = canManageMembers && !isOwner && !isCurrentUser
+
   const canLeave = isCurrentUser && !isOwner
 
-  // Show a button if either action is available.
-  const action: 'remove' | 'leave' | null = canRemove
-    ? 'remove'
-    : canLeave
-      ? 'leave'
-      : null
+  const activeMutation =
+    confirmAction === 'transfer' ? transferMutation : removeMutation
 
   function handleConfirm() {
-    removeMutation.mutate(
-      { projectId, userId: member._id },
-      {
-        onSuccess: () => {
-          if (action === 'leave') {
-            toast.success('Left the project')
-            // The parent navigates away — see MembersModal.
-            onLeaveSuccess()
-          } else {
-            toast.success(`Removed ${member.username}`)
-            setIsConfirming(false)
-          }
+    if (confirmAction === 'transfer') {
+      transferMutation.mutate(
+        { projectId, newOwnerId: member._id },
+        {
+          onSuccess: () => {
+            toast.success(`Ownership transferred to ${member.username}`)
+            setConfirmAction(null)
+          },
+          onError: (error) => {
+            toast.error(error.message)
+            setConfirmAction(null)
+          },
         },
-        onError: (error) => {
-          toast.error(error.message)
-          setIsConfirming(false)
+      )
+    } else {
+      removeMutation.mutate(
+        { projectId, userId: member._id },
+        {
+          onSuccess: () => {
+            if (confirmAction === 'leave') {
+              toast.success('Left the project')
+              onLeaveSuccess()
+            } else {
+              toast.success(`Removed ${member.username}`)
+              setConfirmAction(null)
+            }
+          },
+          onError: (error) => {
+            toast.error(error.message)
+            setConfirmAction(null)
+          },
         },
-      },
-    )
+      )
+    }
   }
 
   return (
@@ -81,28 +97,67 @@ function MemberRow({
           <p className="truncate text-xs text-slate-500">{member.email}</p>
         </div>
 
-        {action && (
-          <button
-            type="button"
-            onClick={() => setIsConfirming(true)}
-            className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-          >
-            {action === 'leave' ? 'Leave project' : 'Remove'}
-          </button>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {canTransfer && (
+            <button
+              type="button"
+              onClick={() => setConfirmAction('transfer')}
+              className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100"
+            >
+              Make owner
+            </button>
+          )}
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => setConfirmAction('remove')}
+              className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+            >
+              Remove
+            </button>
+          )}
+          {canLeave && (
+            <button
+              type="button"
+              onClick={() => setConfirmAction('leave')}
+              className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+            >
+              Leave project
+            </button>
+          )}
+        </div>
       </div>
 
-      {isConfirming && (
+      {confirmAction !== null && (
         <ConfirmDialog
           open
           title={
-            action === 'leave' ? 'Leave this project?' : 'Remove this member?'
+            confirmAction === 'transfer'
+              ? 'Transfer ownership?'
+              : confirmAction === 'leave'
+                ? 'Leave this project?'
+                : 'Remove this member?'
           }
           description={
-            action === 'leave' ? (
+            confirmAction === 'transfer' ? (
+              <>
+                <p>
+                  You’ll transfer ownership of this project to{' '}
+                  <strong className="font-semibold text-slate-900">
+                    {member.username}
+                  </strong>
+                  .
+                </p>
+                <p className="mt-2">
+                  You’ll become a regular member and lose the ability to manage
+                  members, edit project settings, or delete the project. This
+                  can only be undone if the new owner transfers it back to you.
+                </p>
+              </>
+            ) : confirmAction === 'leave' ? (
               <p>
-                You’ll lose access to this project. You can rejoin if the owner
-                adds you back.
+                You’ll lose access to this project. You can rejoin if the
+                owner adds you back.
               </p>
             ) : (
               <p>
@@ -114,11 +169,17 @@ function MemberRow({
               </p>
             )
           }
-          confirmLabel={action === 'leave' ? 'Leave' : 'Remove'}
-          variant="destructive"
-          isPending={removeMutation.isPending}
+          confirmLabel={
+            confirmAction === 'transfer'
+              ? 'Transfer ownership'
+              : confirmAction === 'leave'
+                ? 'Leave'
+                : 'Remove'
+          }
+          variant={confirmAction === 'transfer' ? 'primary' : 'destructive'}
+          isPending={activeMutation.isPending}
           onConfirm={handleConfirm}
-          onCancel={() => setIsConfirming(false)}
+          onCancel={() => setConfirmAction(null)}
         />
       )}
     </>

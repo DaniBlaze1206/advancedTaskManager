@@ -16,6 +16,7 @@ export function useRemoveMember() {
       queryClient.invalidateQueries({
         queryKey: qk.project(variables.projectId),
       })
+      queryClient.invalidateQueries({ queryKey: qk.projects })
     },
   })
 }
