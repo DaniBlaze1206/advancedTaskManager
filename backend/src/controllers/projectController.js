@@ -288,9 +288,9 @@ const removeMember = async (req, res) => {
   }
 
   try {
-    const { id, userId } = req.params;
+    const { projectId, userId } = req.params;
 
-    const project = await Project.findById(id);
+    const project = await Project.findById(projectId);
 
     if (!project) {
       return res.status(404).json({
@@ -353,10 +353,10 @@ const transferOwnership = async (req, res) => {
   }
 
   try {
-    const { id } = req.params;
+    const { projectId } = req.params;
     const { newOwnerId } = req.body;
 
-    const project = await Project.findById(id);
+    const project = await Project.findById(projectId);
 
     if (!project) {
       return res.status(404).json({
