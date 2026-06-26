@@ -29,6 +29,7 @@ export type ProjectDetail = {
 export type CreateProjectInput = {
   name: string
   description?: string
+  members?: string[]
 }
 
 export type UpdateProjectInput = {
@@ -117,3 +118,4 @@ export async function transferOwnership(
     { newOwnerId },
   )
 }
+
