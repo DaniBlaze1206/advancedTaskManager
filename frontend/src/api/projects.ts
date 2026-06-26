@@ -29,6 +29,7 @@ export type ProjectDetail = {
 export type CreateProjectInput = {
   name: string
   description?: string
+  members?: string[]
 }
 
 export type UpdateProjectInput = {
@@ -49,6 +50,11 @@ type ProjectEnvelope = {
 type ProjectDetailEnvelope = {
   success: true
   data: ProjectDetail
+}
+
+type SimpleEnvelope = {
+  success: true
+  message: string
 }
 
 export async function getProjects(): Promise<Project[]> {
@@ -84,3 +90,32 @@ export async function updateProject(
 export async function deleteProject(projectId: string): Promise<void> {
   await apiClient.delete(`/projects/${projectId}`)
 }
+
+export async function addMember(
+  projectId: string,
+  username: string,
+): Promise<void> {
+  await apiClient.post<SimpleEnvelope>(`/projects/${projectId}/members`, {
+    username,
+  })
+}
+
+export async function removeMember(
+  projectId: string,
+  userId: string,
+): Promise<void> {
+  await apiClient.delete<SimpleEnvelope>(
+    `/projects/${projectId}/members/${userId}`,
+  )
+}
+
+export async function transferOwnership(
+  projectId: string,
+  newOwnerId: string,
+): Promise<void> {
+  await apiClient.patch<SimpleEnvelope>(
+    `/projects/${projectId}/transfer`,
+    { newOwnerId },
+  )
+}
+
