@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useProject } from '../hooks/useProject'
 import PageLoader from '../components/ui/PageLoader'
 import Button from '../components/ui/Button'
@@ -8,6 +8,7 @@ import MembersModal from '../components/members/MembersModal'
 
 function BoardPage() {
   const { projectId } = useParams<{ projectId: string }>()
+  const navigate = useNavigate()
   const projectQuery = useProject(projectId ?? '')
   const [isMembersOpen, setIsMembersOpen] = useState(false)
 
@@ -72,11 +73,15 @@ function BoardPage() {
       </div>
 
       {isMembersOpen && (
-        <MembersModal
-          project={project}
-          onClose={() => setIsMembersOpen(false)}
-        />
-      )}
+  <MembersModal
+    project={project}
+    onClose={() => setIsMembersOpen(false)}
+    onLeave={() => {
+      setIsMembersOpen(false)
+      navigate('/')
+    }}
+  />
+)}
     </div>
   )
 }

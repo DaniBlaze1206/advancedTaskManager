@@ -7,13 +7,13 @@ import { toast } from '../../lib/toast'
 import MemberRow from './MemberRow'
 import type { ProjectDetail } from '../../api/projects'
 
-function MembersModal({
-  project,
-  onClose,
-}: {
+type MembersModalProps = {
   project: ProjectDetail
   onClose: () => void
-}) {
+  onLeave: () => void
+}
+
+function MembersModal({ project, onClose, onLeave }: MembersModalProps) {
   const { session } = useAuth()
 
   const sessionUser = session?.user as
@@ -98,8 +98,11 @@ function MembersModal({
             <MemberRow
               key={member._id}
               member={member}
+              projectId={project._id}
               isOwner={member._id === project.owner._id}
               isCurrentUser={!!currentUserId && member._id === currentUserId}
+              canManageMembers={isOwner}
+              onLeaveSuccess={onLeave}
             />
           ))}
         </div>
